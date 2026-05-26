@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yuma - Menu Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+        
+        body { font-family: 'Space Grotesk', system-ui, sans-serif; background-color: #050505; transition: all 400ms ease; }
+        
+        /* Light Theme overrides */
+        body.light-theme { background-color: #f1f5f9; color: #1e293b; }
+        body.light-theme .glass-card { background: rgba(255, 255, 255, 0.9); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); color: #1e293b; }
+        body.light-theme input { background-color: #ffffff !important; border-color: #cbd5e1 !important; color: #0f172a !important; }
+        body.light-theme #customLangBtn, body.light-theme #logoutBtn { background-color: #ffffff; border-color: #cbd5e1; color: #334155; }
+        body.light-theme #logoutBtn:hover { background-color: #fee2e2; color: #ef4444; }
+        body.light-theme .text-zinc-400 { color: #64748b !important; }
+        body.light-theme .lang-option { color: #334155; }
+        body.light-theme .lang-option:hover { background-color: #f1f5f9; }
+        body.light-theme #closeLangModalBtn { color: #64748b; }
+        body.light-theme #closeLangModalBtn:hover { color: #1e293b; }
+        
+        .glass-card { background: rgba(30, 30, 35, 0.6); border-radius: 1.25rem; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        
+        /* Theme Toggle Animation styling */
+        #themeToggle { background-color: #27272a; }
+        body.light-theme #themeToggle { background-color: #cbd5e1; }
+        
+        #themeThumb { transform: translateX(4px); }
+        body.light-theme #themeThumb { transform: translateX(32px); }
+    </style>
+</head>
+<body class="text-zinc-300 min-h-screen p-4">
+    <div id="toast-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-3"></div>
+
+    <div id="login-screen" class="min-h-screen flex justify-center items-center">
+        <div class="glass-card p-8 w-full max-w-md text-center">
+            <h2 class="text-2xl font-bold text-white mb-6" data-i18n="loginTitle">Управление Меню</h2>
+            <form id="loginForm" class="space-y-4">
+                <input type="email" id="loginEmail" data-i18n-placeholder="loginEmailPlaceholder" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none" placeholder="Email" required>
+                <input type="password" id="loginPassword" data-i18n-placeholder="loginPassPlaceholder" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none" placeholder="Пароль" required>
+                <button type="submit" class="w-full bg-orange-500 text-white font-bold py-3 rounded-lg hover:bg-orange-600 transition" data-i18n="loginBtn">Войти</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="admin-screen" class="hidden max-w-6xl mx-auto mt-10">
+        <header class="glass-card p-5 mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <h1 class="text-xl font-bold text-orange-500"><i class="fa-solid fa-utensils mr-2"></i> <span data-i18n="headerTitle">Редактор Меню</span></h1>
+            
+            <div class="flex items-center gap-3 sm:gap-4 flex-wrap justify-center">
+                <button id="themeToggle" type="button" class="relative inline-flex h-7 w-14 items-center rounded-full border border-white/10 cursor-pointer p-0 select-none">
+                    <span id="themeThumb" class="h-5 w-5 rounded-full bg-white transition duration-300 flex items-center justify-center text-[10px]">
+                        <i id="themeIcon" class="fa-solid fa-moon text-zinc-900 transition-all duration-300"></i>
+                    </span>
+                </button>
+                
+                <div class="relative inline-block text-left select-none">
+                    <button id="customLangBtn" type="button" class="bg-zinc-800 text-zinc-200 text-sm px-4 py-2 rounded-xl border border-white/10 font-bold flex items-center gap-2 hover:bg-zinc-700/50 transition">
+                        <span id="currentLangText">Русский</span>
+                        <i class="fa-solid fa-globe text-xs text-zinc-400"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 sm:gap-4">
+                <button id="addBtn" class="bg-green-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-green-700 text-white" data-i18n="addDishBtn">Добавить блюдо</button>
+                <button id="logoutBtn" class="bg-zinc-800 px-4 py-2 rounded-xl border border-white/10 text-sm font-bold hover:bg-zinc-700 text-zinc-300" data-i18n="logoutBtn">Выйти</button>
+            </div>
+        </header>
+
+        <div class="overflow-x-auto glass-card">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-white/10 bg-black/20">
+                        <th class="p-4" data-i18n="thPhoto">Фото</th>
+                        <th class="p-4" data-i18n="thId">ID</th>
+                        <th class="p-4" data-i18n="thCategory">Категория</th>
+                        <th class="p-4" data-i18n="thName">Название</th>
+                        <th class="p-4" data-i18n="thPrice">Цена</th>
+                        <th class="p-4" data-i18n="thActions">Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="menuTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="langModal" class="fixed inset-0 bg-black/70 flex items-center justify-center hidden z-[100] p-4 transition-all duration-300 opacity-0 backdrop-blur-sm">
+        <div id="langModalContent" class="glass-card p-6 w-full max-w-xs transform scale-95 transition-all duration-300 relative">
+            <button id="closeLangModalBtn" class="absolute top-4 right-4 text-zinc-400 hover:text-white transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <h3 class="text-lg font-bold text-white mb-4 pr-6 select-none">Language / Язык</h3>
+            <div class="space-y-1">
+                <div data-lang="ru" class="lang-option px-4 py-3 text-sm font-semibold text-zinc-200 hover:bg-white/5 rounded-xl cursor-pointer flex items-center justify-between transition select-none">
+                    <span>Русский</span>
+                    <i class="fa-solid fa-check text-xs text-orange-500 hidden" data-check="ru"></i>
+                </div>
+                <div data-lang="uz" class="lang-option px-4 py-3 text-sm font-semibold text-zinc-200 hover:bg-white/5 rounded-xl cursor-pointer flex items-center justify-between transition select-none">
+                    <span>O'zbekcha</span>
+                    <i class="fa-solid fa-check text-xs text-orange-500 hidden" data-check="uz"></i>
+                </div>
+                <div data-lang="en" class="lang-option px-4 py-3 text-sm font-semibold text-zinc-200 hover:bg-white/5 rounded-xl cursor-pointer flex items-center justify-between transition select-none">
+                    <span>English</span>
+                    <i class="fa-solid fa-check text-xs text-orange-500 hidden" data-check="en"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="editModal" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 p-4">
+        <div class="glass-card p-6 w-full max-w-lg">
+            <h2 id="modalTitle" class="text-xl font-bold text-white mb-4">Блюдо</h2>
+            <form id="editForm" class="space-y-3">
+                <input type="hidden" id="dishId">
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="text-xs text-zinc-400" data-i18n="lblCategory">Категория</label><input type="text" id="dishCat" class="w-full bg-black/40 border border-white/10 rounded px-2 py-1" required></div>
+                    <div><label class="text-xs text-zinc-400" data-i18n="lblPrice">Цена</label><input type="number" id="dishPrice" class="w-full bg-black/40 border border-white/10 rounded px-2 py-1" required></div>
+                </div>
+                <div><label class="text-xs text-zinc-400" data-i18n="lblImage">Имя файла картинки</label><input type="text" id="dishImage" class="w-full bg-black/40 border border-white/10 rounded px-2 py-1" required></div>
+                <div><label class="text-xs text-zinc-400" data-i18n="lblNameUz">Название (UZ)</label><input type="text" id="dishNameUz" class="w-full bg-black/40 border border-white/10 rounded px-2 py-1" required></div>
+                <div><label class="text-xs text-zinc-400" data-i18n="lblNameRu">Название (RU)</label><input type="text" id="dishNameRu" class="w-full bg-black/40 border border-white/10 rounded px-2 py-1" required></div>
+                <div><label class="text-xs text-zinc-400" data-i18n="lblNameEn">Название (EN)</label><input type="text" id="dishNameEn" class="w-full bg-black/40 border border-white/10 rounded px-2 py-1" required></div>
+                
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" class="flex-1 bg-orange-500 py-3 rounded-lg font-bold text-white" data-i18n="btnSave">Сохранить</button>
+                    <button type="button" id="closeModalBtn" class="flex-1 bg-zinc-700 py-3 rounded-lg font-bold text-white" data-i18n="btnCancel">Отмена</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getDatabase, ref, onValue, set, remove, push } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBR3rLYp-cpq9nYsDKwwdbTziLr1w0qxn8",
+            authDomain: "jwiidid.firebaseapp.com",
+            databaseURL: "https://jwiidid-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "jwiidid"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+        const ALLOWED_UID = '0pC92Tx1A8gyhbM3ina3MAOAbyN2';
+        let currentMenu = {};
+
+        // --- Локализация (Переводы) ---
+        const translations = {
+            ru: {
+                loginTitle: "Управление Меню", loginEmailPlaceholder: "Email", loginPassPlaceholder: "Пароль", loginBtn: "Войти",
+                headerTitle: "Редактор Меню", addDishBtn: "Добавить блюдо", logoutBtn: "Выйти",
+                thPhoto: "Фото", thId: "ID", thCategory: "Категория", thName: "Название", thPrice: "Цена", thActions: "Действия",
+                modalTitleAdd: "Добавить блюдо", modalTitleEdit: "Редактировать блюдо",
+                lblCategory: "Категория", lblPrice: "Цена", lblImage: "Имя файла картинки",
+                lblNameUz: "Название (UZ)", lblNameRu: "Название (RU)", lblNameEn: "Название (EN)",
+                btnSave: "Сохранить", btnCancel: "Отмена",
+                msgSaved: "Сохранено!", msgError: "Ошибка: ", confirmDelete: "Точно удалить?"
+            },
+            uz: {
+                loginTitle: "Menyu boshqaruvi", loginEmailPlaceholder: "Email", loginPassPlaceholder: "Parol", loginBtn: "Kirish",
+                headerTitle: "Menyu muharriri", addDishBtn: "Taom qo'shish", logoutBtn: "Chiqish",
+                thPhoto: "Rasm", thId: "ID", thCategory: "Kategoriya", thName: "Nomi", thPrice: "Narxi", thActions: "Harakatlar",
+                modalTitleAdd: "Taom qo'shish", modalTitleEdit: "Taomni tahrirlash",
+                lblCategory: "Kategoriya", lblPrice: "Narxi", lblImage: "Rasm fayl nomi",
+                lblNameUz: "Nomi (UZ)", lblNameRu: "Nomi (RU)", lblNameEn: "Nomi (EN)",
+                btnSave: "Saqlash", btnCancel: "Bekor qilish",
+                msgSaved: "Saqlandi!", msgError: "Xatolik: ", confirmDelete: "Haqiqatan ham o'chirasizmi?"
+            },
+            en: {
+                loginTitle: "Menu Management", loginEmailPlaceholder: "Email", loginPassPlaceholder: "Password", loginBtn: "Login",
+                headerTitle: "Menu Editor", addDishBtn: "Add Dish", logoutBtn: "Logout",
+                thPhoto: "Photo", thId: "ID", thCategory: "Category", thName: "Name", thPrice: "Price", thActions: "Actions",
+                modalTitleAdd: "Add Dish", modalTitleEdit: "Edit Dish",
+                lblCategory: "Category", lblPrice: "Price", lblImage: "Image Filename",
+                lblNameUz: "Name (UZ)", lblNameRu: "Name (RU)", lblNameEn: "Name (EN)",
+                btnSave: "Save", btnCancel: "Cancel",
+                msgSaved: "Saved!", msgError: "Error: ", confirmDelete: "Are you sure to delete?"
+            }
+        };
+
+        const langNames = { ru: "Русский", uz: "O'zbekcha", en: "English" };
+        let currentLang = localStorage.getItem('menu_admin_lang') || 'ru';
+
+        function translateInterface() {
+            const t = translations[currentLang];
+            
+            document.getElementById('currentLangText').innerText = langNames[currentLang];
+            
+            document.querySelectorAll('[data-check]').forEach(el => {
+                if(el.getAttribute('data-check') === currentLang) el.classList.remove('hidden');
+                else el.classList.add('hidden');
+            });
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (t[key]) el.innerText = t[key];
+            });
+
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (t[key]) el.setAttribute('placeholder', t[key]);
+            });
+
+            const dishIdVal = document.getElementById('dishId').value;
+            if(!document.getElementById('editModal').classList.contains('hidden')) {
+                document.getElementById('modalTitle').innerText = dishIdVal ? t.modalTitleEdit : t.modalTitleAdd;
+            }
+        }
+
+        // --- Новая Логика Модального Окна Выбора Языка ---
+        const customLangBtn = document.getElementById('customLangBtn');
+        const langModal = document.getElementById('langModal');
+        const langModalContent = document.getElementById('langModalContent');
+        const closeLangModalBtn = document.getElementById('closeLangModalBtn');
+
+        function openLangModal() {
+            langModal.classList.remove('hidden');
+            setTimeout(() => {
+                langModal.classList.remove('opacity-0');
+                langModal.classList.add('opacity-100');
+                langModalContent.classList.remove('scale-95');
+                langModalContent.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeLangModal() {
+            langModal.classList.remove('opacity-100');
+            langModal.classList.add('opacity-0');
+            langModalContent.classList.remove('scale-100');
+            langModalContent.classList.add('scale-95');
+            setTimeout(() => langModal.classList.add('hidden'), 300);
+        }
+
+        customLangBtn.addEventListener('click', openLangModal);
+        closeLangModalBtn.addEventListener('click', closeLangModal);
+        
+        // Закрытие при клике по фону
+        langModal.addEventListener('click', (e) => {
+            if (e.target === langModal) closeLangModal();
+        });
+
+        document.querySelectorAll('.lang-option').forEach(option => {
+            option.addEventListener('click', () => {
+                currentLang = option.getAttribute('data-lang');
+                localStorage.setItem('menu_admin_lang', currentLang);
+                translateInterface();
+                renderTable();
+                closeLangModal();
+            });
+        });
+
+        // --- Тема и Иконки ---
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+
+        function updateThemeElements(isLight) {
+            if (isLight) {
+                document.body.classList.add('light-theme');
+                themeIcon.className = "fa-solid fa-sun text-amber-500";
+            } else {
+                document.body.classList.remove('light-theme');
+                themeIcon.className = "fa-solid fa-moon text-zinc-900";
+            }
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const isLight = !document.body.classList.contains('light-theme');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            updateThemeElements(isLight);
+        });
+        
+        updateThemeElements(localStorage.getItem('theme') === 'light');
+
+        window.showToast = (msg) => {
+            const t = document.createElement('div');
+            t.className = "bg-zinc-800 text-white px-4 py-2 rounded-lg border border-white/10 shadow-lg";
+            t.innerText = msg;
+            document.getElementById('toast-container').appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+
+        // --- Авторизация ---
+        onAuthStateChanged(auth, (user) => {
+            if (user && user.uid === ALLOWED_UID) {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('admin-screen').classList.remove('hidden');
+                translateInterface();
+                loadMenu();
+            } else {
+                document.getElementById('login-screen').classList.remove('hidden');
+                document.getElementById('admin-screen').classList.add('hidden');
+                translateInterface();
+            }
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            signInWithEmailAndPassword(auth, document.getElementById('loginEmail').value, document.getElementById('loginPassword').value)
+                .catch(err => showToast(translations[currentLang].msgError + err.message));
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
+
+        // --- База данных ---
+        function loadMenu() {
+            onValue(ref(db, 'menu'), (snap) => {
+                currentMenu = snap.val() || {};
+                renderTable();
+            });
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('menuTableBody');
+            tbody.innerHTML = '';
+            Object.keys(currentMenu).forEach(id => {
+                const d = currentMenu[id];
+                const displayName = d[`name_${currentLang}`] || d.name_ru || '—';
+                
+                tbody.innerHTML += `
+                    <tr class="border-b border-white/5 hover:bg-white/5">
+                        <td class="p-4"><img src="https://cdn.jsdelivr.net/gh/yumafergana/yuma-images@main/${d.image}" class="w-12 h-12 object-cover rounded"></td>
+                        <td class="p-4 text-xs text-zinc-500">${id}</td>
+                        <td class="p-4"><span class="bg-zinc-800 px-2 py-1 rounded text-xs text-white">${d.category}</span></td>
+                        <td class="p-4 font-bold text-sm">${displayName}</td>
+                        <td class="p-4 text-orange-400 font-bold">${d.price}</td>
+                        <td class="p-4">
+                            <button onclick="window.editDish('${id}')" class="text-sky-400 mr-3"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="window.deleteDish('${id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        // --- Модальное окно и редактирование ---
+        const modal = document.getElementById('editModal');
+        const form = document.getElementById('editForm');
+
+        document.getElementById('addBtn').addEventListener('click', () => {
+            form.reset();
+            document.getElementById('dishId').value = '';
+            document.getElementById('modalTitle').innerText = translations[currentLang].modalTitleAdd;
+            modal.classList.remove('hidden');
+        });
+
+        document.getElementById('closeModalBtn').addEventListener('click', () => modal.classList.add('hidden'));
+
+        window.editDish = (id) => {
+            const d = currentMenu[id];
+            document.getElementById('dishId').value = id;
+            document.getElementById('dishCat').value = d.category;
+            document.getElementById('dishPrice').value = d.price;
+            document.getElementById('dishImage').value = d.image;
+            document.getElementById('dishNameUz').value = d.name_uz;
+            document.getElementById('dishNameRu').value = d.name_ru;
+            document.getElementById('dishNameEn').value = d.name_en;
+            document.getElementById('modalTitle').innerText = translations[currentLang].modalTitleEdit;
+            modal.classList.remove('hidden');
+        };
+
+        window.deleteDish = (id) => {
+            if(confirm(translations[currentLang].confirmDelete)) remove(ref(db, 'menu/' + id));
+        };
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('dishId').value;
+            const data = {
+                category: document.getElementById('dishCat').value,
+                price: Number(document.getElementById('dishPrice').value),
+                image: document.getElementById('dishImage').value,
+                name_uz: document.getElementById('dishNameUz').value,
+                name_ru: document.getElementById('dishNameRu').value,
+                name_en: document.getElementById('dishNameEn').value,
+            };
+
+            if (id) await set(ref(db, 'menu/' + id), data);
+            else await push(ref(db, 'menu'), data);
+            
+            modal.classList.add('hidden');
+            showToast(translations[currentLang].msgSaved);
+        });
+        
+        translateInterface();
+    </script>
+</body>
+</html>
